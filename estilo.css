@@ -1,0 +1,273 @@
+/* A.R Systems — site institucional. HTML e CSS puros, sem build.
+   Cores chapadas, cantos retos, superfícies separadas por degrau de tom (sem contorno, sem sombra, sem degradê).
+   Janelas que deslizam: a escolhida abre, as outras viram faixas com o nome.
+   Celular (e sem JavaScript): as mesmas janelas, empilhadas, abrindo para baixo. */
+
+:root {
+  /* Roxo é a cor da marca (pedido do João); fica chapado e em campos inteiros */
+  --roxo: #5a17d6;
+  --roxo-fundo: #4a10b8;  /* hover e toque sobre o roxo */
+  --tinta: #150d22;
+  --fundo: #f1eff4;
+  --folha: #ffffff;       /* conteúdo do serviço aberto */
+  --faixa: #e1dce9;       /* janela fechada: um degrau abaixo do fundo */
+  --faixa-2: #d3ccdf;     /* janela fechada com o mouse em cima */
+  --apagado: #5b5468;     /* notas pequenas, 6.6:1 sobre o branco */
+
+  --fonte: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* Cinco tamanhos */
+  --t-nota: 0.875rem;
+  --t-corpo: 1.0625rem;
+  --t-aba: 1.125rem;
+  --t-frase: clamp(1.375rem, 1rem + 1vw, 2rem);
+  --t-display: clamp(2.75rem, 1rem + 4.6vw, 6.75rem);
+
+  --margem: clamp(16px, 1.8vw, 28px);
+  --vao: 4px;                          /* entre janelas: deixa o fundo aparecer */
+  --aba: clamp(56px, 4.2vw, 68px);     /* largura da faixa de uma janela fechada */
+  --deslize: 0.7s;
+  --curva: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: var(--fonte);
+  font-size: var(--t-corpo);
+  line-height: 1.55;
+  overflow-x: clip;
+}
+img { display: block; max-width: 100%; height: auto; }
+h1, h2, h3, p, figure, ul { margin: 0; padding: 0; }
+ul { list-style: none; }
+a { color: inherit; text-underline-offset: 0.2em; text-decoration-thickness: 0.08em; }
+:focus-visible { outline: 3px solid var(--roxo); outline-offset: 2px; }
+::selection { background: var(--roxo); color: #fff; }
+button { font: inherit; color: inherit; }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.pular { position: absolute; left: var(--margem); top: -100px; z-index: 30; background: var(--tinta); color: #fff; padding: 12px 16px; }
+.pular:focus { top: 8px; }
+
+/* Na carga, as janelas já nascem no lugar (sem deslizar) */
+.sem-transicao *, .sem-transicao *::before, .sem-transicao *::after { transition: none !important; }
+
+/* ---------- Topo: marca, dois ícones e uma ação ---------- */
+.topo {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 14px var(--margem);
+}
+.topo__marca { display: flex; align-items: center; gap: 14px; text-decoration: none; min-width: 0; }
+.topo__logo {
+  display: grid; place-items: center; flex: none;
+  width: 44px; aspect-ratio: 1;
+  background: var(--roxo); color: #fff;
+  font-weight: 800; font-size: 1.125rem; letter-spacing: -0.06em;
+}
+.topo__nome { font-size: clamp(1.25rem, 1rem + 0.8vw, 1.625rem); font-weight: 800; letter-spacing: -0.035em; white-space: nowrap; }
+.topo__contato { display: flex; align-items: center; gap: 4px; flex: none; }
+.topo__icone, .topo__cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 48px; text-decoration: none; font-weight: 600;
+  transition: background-color 0.2s, color 0.2s, transform 0.15s var(--curva);
+}
+.topo__icone { width: 48px; }
+.topo__icone:hover { background: var(--faixa); color: var(--roxo); }
+.topo__cta { margin-left: 8px; padding: 0 20px; background: var(--roxo); color: #fff; }
+.topo__cta:hover { background: var(--roxo-fundo); }
+.topo__icone:active, .topo__cta:active { transform: scale(0.96); }
+.topo svg { width: 20px; height: 20px; fill: currentColor; flex: none; }
+
+/* ---------- Janelas: base (empilhadas, abrem para baixo) ---------- */
+.palco { display: flex; flex-direction: column; gap: var(--vao); padding: 0 var(--margem) var(--margem); }
+.janela { display: flex; flex-direction: column; min-width: 0; background: var(--faixa); overflow: hidden; }
+.janela__cabeca { margin: 0; font-size: inherit; }
+.janela__aba {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 60px; padding: 0 20px;
+  background: var(--faixa); border: 0; cursor: pointer; text-align: left;
+  font-size: var(--t-aba); font-weight: 600; letter-spacing: -0.01em; line-height: 1.2;
+  transition: background-color 0.25s, color 0.25s;
+}
+.janela:not(.aberta) > .janela__cabeca .janela__aba:hover { background: var(--faixa-2); }
+.janela__aba:active .janela__rotulo { transform: translateY(1px); }
+.janela__seta {
+  width: 10px; height: 10px; flex: none;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: translateY(-3px) rotate(45deg);
+  transition: transform 0.35s var(--curva);
+}
+html:not(.js) .janela__seta { display: none; } /* sem JavaScript tudo fica aberto: a seta só confundiria */
+.js .janela.aberta > .janela__cabeca .janela__seta { transform: translateY(2px) rotate(-135deg); }
+
+/* Serviço aberto: faixa roxa, conteúdo na folha branca */
+.janela.aberta > .janela__cabeca .janela__aba { background: var(--roxo); color: #fff; }
+.janela.aberta { background: var(--folha); }
+
+/* "Quem somos" aberta: a janela inteira vira um campo roxo */
+.janela--sobre.aberta { background: var(--roxo); color: #fff; }
+.janela--sobre.aberta > .janela__cabeca .janela__aba { background: var(--roxo-fundo); }
+
+/* O grupo não é cartão: as janelas dos serviços é que são. Aberto, a faixa dele fica na tinta. */
+.janela--grupo, .janela--grupo.aberta { background: none; gap: var(--vao); overflow: visible; }
+.janela--grupo.aberta > .janela__cabeca .janela__aba { background: var(--tinta); color: #fff; }
+.grupo { display: flex; flex-direction: column; gap: var(--vao); }
+
+/* Conteúdo: abre para baixo animando a altura (0fr → 1fr) */
+.janela__conteudo { display: grid; grid-template-rows: 1fr; transition: grid-template-rows var(--deslize) var(--curva); }
+.janela__miolo { min-height: 0; min-width: 0; overflow: hidden; container-type: inline-size; }
+.janela__dentro { padding: clamp(24px, 3vw, 48px) clamp(20px, 3vw, 48px); }
+.janela--grupo > .janela__conteudo > .janela__miolo { overflow: visible; container-type: normal; }
+.grupo.janela__dentro { padding: 0; }
+
+.js .janela:not(.aberta) > .janela__conteudo { grid-template-rows: 0fr; }
+/* Fechada, o conteúdo some de vez depois que a janela termina de recolher */
+.js .janela:not(.aberta) > .janela__conteudo > .janela__miolo > .janela__dentro { visibility: hidden; transition: visibility 0s var(--deslize); }
+.js .janela--grupo:not(.aberta) > .janela__conteudo > .janela__miolo { overflow: hidden; }
+
+/* Peças do conteúdo sobem uma depois da outra quando a janela abre */
+.js .janela .entra { opacity: 0; translate: 0 20px; }
+.js .janela.aberta > .janela__conteudo > .janela__miolo > .janela__dentro > .entra,
+.js .janela.aberta > .janela__conteudo > .janela__miolo > .janela__dentro > * > .entra {
+  opacity: 1; translate: 0 0;
+  transition: opacity 0.5s var(--curva), translate 0.7s var(--curva);
+  transition-delay: calc(0.22s + var(--n, 0) * 70ms);
+}
+
+/* Entrada na carga: as janelas sobem uma depois da outra */
+.js .palco > .janela, .js .grupo > .janela { animation: subir 0.7s var(--curva) both; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes subir { from { opacity: 0; translate: 0 24px; } }
+.js .topo__logo, .js .topo__nome, .js .topo__icone, .js .topo__cta { animation: subir 0.6s var(--curva) both; }
+.js .topo__nome { animation-delay: 60ms; }
+.js .topo__icone { animation-delay: 120ms; }
+.js .topo__cta { animation-delay: 180ms; }
+
+/* ---------- Quem somos ---------- */
+.sobre { display: grid; grid-template-columns: minmax(120px, 220px) minmax(0, 1fr); gap: clamp(20px, 3vw, 56px); align-items: center; }
+.sobre__foto {
+  display: grid; place-items: center;
+  aspect-ratio: 4 / 5;
+  background: var(--tinta); color: #fff;
+  font-size: clamp(2.5rem, 5vw, 5.5rem); font-weight: 800; letter-spacing: -0.06em;
+  overflow: hidden;
+}
+.sobre__foto img { width: 100%; height: 100%; object-fit: cover; }
+.sobre__texto { display: grid; gap: 18px; max-width: 60ch; }
+.sobre__nome { font-size: var(--t-display); font-weight: 800; letter-spacing: -0.045em; line-height: 0.92; margin-bottom: 8px; }
+.sobre__texto > p:not([class]) { font-size: 1.1875rem; line-height: 1.5; }
+.sobre__rodape { font-size: var(--t-nota); }
+
+/* ---------- Serviço aberto ---------- */
+.servico { display: grid; gap: 16px; justify-items: start; align-content: start; }
+.servico__titulo { font-size: var(--t-display); font-weight: 800; letter-spacing: -0.045em; line-height: 0.92; max-width: 13ch; }
+.servico__linha { max-width: 58ch; font-size: 1.1875rem; line-height: 1.5; }
+.servico__frase { max-width: 30ch; margin-bottom: 8px; font-size: var(--t-frase); font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; margin-top: 8px; }
+.servico__link {
+  display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px;
+  background: var(--tinta); color: #fff; font-weight: 600; text-decoration: none;
+  transition: background-color 0.2s, transform 0.15s var(--curva);
+}
+.servico__link:hover { background: var(--roxo); }
+.servico__link:active { transform: scale(0.97); }
+.servico__nota { font-size: var(--t-nota); color: var(--apagado); }
+.servico--texto { min-height: 100%; align-content: center; }
+
+/* Vitrines: uma composição por serviço */
+.vitrine { display: grid; gap: 8px; width: 100%; margin-top: clamp(12px, 2vw, 28px); }
+.quadro { display: block; height: 100%; overflow: hidden; background: var(--faixa); }
+.quadro img { width: 100%; height: 100%; object-fit: cover; object-position: left top; transition: transform 0.6s var(--curva); }
+a.quadro:hover img { transform: scale(1.03); }
+a.quadro:active { transform: scale(0.99); }
+
+/* Agenda: o painel grande e o celular ao lado, na mesma altura */
+.vitrine--agenda { grid-template-columns: minmax(0, 3.4fr) minmax(0, 1fr); }
+.vitrine--agenda li:first-child .quadro { aspect-ratio: 1800 / 938; }
+.vitrine--agenda li:last-child img { object-position: center 10%; }
+/* O painel passeia devagar pela semana */
+.quadro--passeia img { width: 135%; max-width: none; animation: passear 26s ease-in-out infinite alternate; }
+a.quadro--passeia:hover img { transform: none; }
+@keyframes passear { to { transform: translateX(-26%); } }
+
+/* Fluxograma: a tela inteira em cima, três painéis embaixo */
+.vitrine--fluxo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.vitrine--fluxo li:first-child { grid-column: 1 / -1; }
+.vitrine--fluxo li:first-child .quadro { aspect-ratio: 16 / 10; }
+.vitrine--fluxo li:not(:first-child) .quadro { aspect-ratio: 4 / 5; }
+
+/* Landing pages: quatro celulares lado a lado */
+.vitrine--sites { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.vitrine--sites .quadro { aspect-ratio: 9 / 16; }
+
+@container (max-width: 620px) {
+  .vitrine--agenda { grid-template-columns: minmax(0, 1fr); }
+  .vitrine--agenda li:last-child { width: 62%; }
+  .vitrine--agenda li:last-child .quadro { aspect-ratio: 4 / 5; }
+  .vitrine--agenda li:last-child img { object-position: center top; }
+  .vitrine--sites { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ---------- Print ampliado ---------- */
+.zoom {
+  width: min(96vw, 1400px); max-width: none; max-height: 94svh;
+  padding: 0; border: 0;
+  background: var(--tinta); color: #fff;
+}
+.zoom::backdrop { background: rgb(21 13 34 / 0.85); }
+.zoom form { display: flex; justify-content: flex-end; }
+.zoom__fechar { min-height: 48px; padding: 0 22px; border: 0; cursor: pointer; background: var(--roxo); color: #fff; font-weight: 600; }
+.zoom__fechar:hover { background: var(--roxo-fundo); }
+.zoom__img { width: 100%; max-height: calc(94svh - 110px); object-fit: contain; }
+.zoom__legenda { padding: 12px 20px 18px; font-size: var(--t-nota); }
+
+/* ---------- Computador: as janelas deslizam na horizontal, tudo numa tela ---------- */
+@media (min-width: 900px) {
+  .sobre { grid-template-columns: minmax(200px, 340px) minmax(0, 1fr); }
+
+  .js body { display: grid; grid-template-rows: auto minmax(0, 1fr); height: 100svh; min-height: 640px; }
+  .js .palco { flex-direction: row; min-height: 0; }
+
+  /* Fechada: só a faixa. Aberta: ocupa o resto. É o flex que anima e faz a janela deslizar. */
+  .js .janela { flex-direction: row; flex: 0 0 var(--aba); transition: flex var(--deslize) var(--curva), background-color 0.3s; }
+  .js .janela.aberta { flex: 1 1 0; }
+  .js .janela__cabeca { flex: none; width: var(--aba); }
+  .js .janela__aba { flex-direction: column; justify-content: flex-start; align-items: center; height: 100%; padding: 24px 0; }
+  .js .janela__rotulo { writing-mode: vertical-rl; }
+  .js .janela__seta { display: none; }
+
+  .js .janela__conteudo { display: block; flex: 1; min-width: 0; }
+  .js .janela__miolo { height: 100%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--faixa-2) transparent; }
+  .js .janela:not(.aberta) > .janela__conteudo > .janela__miolo > .janela__dentro { transition: visibility 0s 0.2s; }
+
+  .js .sobre { min-height: 100%; justify-content: center; grid-template-columns: minmax(200px, 340px) minmax(0, 60ch); }
+  .js .janela--grupo > .janela__conteudo > .janela__miolo { overflow: visible; }
+  .js .janela--grupo:not(.aberta) > .janela__conteudo > .janela__miolo { overflow: hidden; }
+  .js .grupo { flex-direction: row; height: 100%; }
+}
+
+@media (max-width: 560px) {
+  .topo { flex-wrap: wrap; row-gap: 10px; column-gap: 4px; padding-block: 10px 12px; }
+  .topo__marca { margin-right: auto; }
+  .topo__nome { font-size: 1.25rem; }
+  .topo__logo { width: 40px; font-size: 1rem; }
+  .topo__contato { display: contents; }
+  .topo__cta { order: 3; width: 100%; margin: 0; }
+
+  .sobre { grid-template-columns: 96px minmax(0, 1fr); column-gap: 16px; row-gap: 20px; }
+  .sobre__texto { display: contents; }
+  .sobre__nome { grid-column: 2; grid-row: 1; align-self: center; font-size: 2.25rem; margin: 0; }
+  .sobre__foto { grid-row: 1; font-size: 2rem; }
+  .sobre__texto > p:not(.sobre__nome) { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --deslize: 0.01s; }
+  .js .janela .entra { translate: none; }
+  .js .palco > .janela, .js .grupo > .janela, .js .topo * { animation: none; }
+  .quadro--passeia img { animation: none; width: 100%; }
+  .quadro img { transition: none; }
+}
